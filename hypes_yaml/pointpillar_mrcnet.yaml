@@ -1,0 +1,173 @@
+name: v2xsim_point_pillar_lidar_mrcnet
+root_dir: "/mnt/dataY/hsx/datasets/v2xsim2_info/v2xsim_infos_train.pkl"
+validate_dir: "/mnt/dataY/hsx/datasets/v2xsim2_info/v2xsim_infos_test.pkl"
+test_dir: "/mnt/dataY/hsx/datasets/v2xsim2_info/v2xsim_infos_test.pkl"
+
+# temporal setting
+temporal_setting:
+  frames_adj: 5 # num of historical frames
+  update_bev_model: 'temporal' #temporal\temporalV2V
+  store_pre_frames: True  
+noise_setting:
+  add_noise: True
+  args: 
+    pos_std: 0.2
+    rot_std: 0.2
+    pos_mean: 0
+    rot_mean: 0
+
+yaml_parser: "load_point_pillar_params"
+train_params:
+  batch_size: &batch_size 4
+  epoches: 50
+  eval_freq: 2
+  save_freq: 2
+  max_cav: &max_cav 5
+
+input_source: ['lidar']
+label_type: 'lidar'
+
+comm_range: 50
+
+fusion:
+  core_method: 'intermediate'
+  dataset: 'v2xsim'
+  args: 
+    proj_first: false
+
+# preprocess-related
+preprocess:
+  # options: BasePreprocessor, VoxelPreprocessor, BevPreprocessor
+  core_method: 'SpVoxelPreprocessor'
+  args:
+    voxel_size: &voxel_size [0.4, 0.4, 5]
+    max_points_per_voxel: 32
+    max_voxel_train: 32000
+    max_voxel_test: 70000
+  # lidar range for each individual cav. Format: xyzxyz minmax
+  cav_lidar_range: &cav_lidar [-32, -32, -3, 32, 32, 2]
+
+data_augment:
+  - NAME: random_world_flip
+    ALONG_AXIS_LIST: [ 'x' ]
+
+  - NAME: random_world_rotation
+    WORLD_ROT_ANGLE: [ -0.78539816, 0.78539816 ]
+
+  - NAME: random_world_scaling
+    WORLD_SCALE_RANGE: [ 0.95, 1.05 ]
+
+# anchor box related
+postprocess:
+  core_method: 'VoxelPostprocessor' # VoxelPostprocessor, BevPostprocessor supported
+  gt_range: *cav_lidar
+  anchor_args:
+    cav_lidar_range: *cav_lidar
+    l: 3.9
+    w: 1.6
+    h: 1.56
+    r: &anchor_yaw [0, 90]
+    feature_stride: 4
+    num: &achor_num 2
+  target_args:
+    pos_threshold: 0.6
+    neg_threshold: 0.45
+    score_threshold: 0.30
+  order: 'hwl' # hwl or lwh
+  max_num: 100 # maximum number of objects in a single frame. use this number to make sure different frames has the same dimension in the same batch
+  nms_thresh: 0.15
+  dir_args: &dir_args
+    dir_offset: 0.7853
+    num_bins: 2
+    anchor_yaw: *anchor_yaw
+
+# model related
+model:
+  core_method: point_pillar_mrcnet
+  args:
+    voxel_size: *voxel_size
+    lidar_range: *cav_lidar
+    anchor_number: *achor_num
+    max_cav: *max_cav
+    compression: 0 # compression rate
+    backbone_fix: false
+
+    pillar_vfe:
+      use_norm: true
+      with_distance: false
+      use_absolute_xyz: true
+      num_filters: [64]
+
+    point_pillar_scatter:
+      num_features: 64
+
+    dalign_bev_backbone:
+      layer_nums: [3, 5, 8]
+      layer_strides: [2, 2, 2]
+      num_filters: [64, 128, 256]
+      upsample_strides: [1, 2, 4] 
+      num_upsample_filter: [128, 128, 128]
+    # temporal mode
+    temporal_model:
+      in_channel: 384 
+      shape_size: [80, 80]
+    
+    MRFmodule:
+      use_pyramid_conv: False
+      use_msda: False
+      use_com: False
+      configs_com:
+        d_model: 128
+        rounds_com: 1
+      config_fusion_block:
+        use_multi_scale: True
+        feature_scale_list: [[80, 80],[40, 40], [20, 20]]
+        num_head: 8
+        num_sampling_points: 4
+        dim_feedforward: 384
+        use_dropout: True
+        dropout: 0.6
+
+      config_feature:
+        target_channel: 128
+        target_resolution: [40, 40]
+        scale_level: 3
+        upsample_strides: [0.5, 1, 2]
+        num_upsample_filters: [128, 128, 128]
+      comm_args:
+        threshold: 0.02
+        gaussian_smooth:
+          k_size: 5
+          c_sigma: 1.0    
+
+    dir_args: *dir_args
+loss:
+  core_method: point_pillar_loss
+  args:
+    pos_cls_weight: 1.0  #1.0
+    cls:
+      type: 'SigmoidFocalLoss'
+      alpha: 0.25
+      gamma: 2.0
+      weight: 1.0
+    reg:
+      type: 'WeightedSmoothL1Loss'
+      sigma: 3.0
+      codewise: true
+      weight: 2.0
+    # dir:
+    #   type: 'WeightedSoftmaxClassificationLoss'
+    #   weight: 0.2
+    #   args: *dir_args
+
+optimizer:
+  core_method: Adam
+  lr: 3e-4
+  args:
+    eps: 1e-10
+    weight_decay: 5e-4
+
+lr_scheduler:
+  core_method: multistep #step, multistep and Exponential support
+  gamma: 0.1
+  step_size: [35, 45]
