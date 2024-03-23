@@ -1,4 +1,4 @@
-# SCOPE
+# MRCNet
 The official implementation of CVPR2024 paper "Multi-agent Collaborative Perception via Motion-aware Robust Communication
 Network".
 
@@ -14,9 +14,9 @@ Network**](https://arxiv.org/pdf/2307.13929.pdf),
 Collaborative perception allows for information sharing between multiple agents, such as vehicles and infrastructure, to obtain a comprehensive view of the environment through communication and fusion. Current research on multi-agent collaborative perception systems often assumes ideal communication and perception environments and neglects the effect of real-world noise such as pose noise, motion blur, and perception noise. To address this gap, in this paper, we propose a novel motion-aware robust communication network (MRCNet) that mitigates noise interference and achieves accurate and robust collaborative perception. MRCNet consists of two main components: multi-scale robust fusion (MRF) addresses pose noise by developing cross-semantic multi-scale enhanced aggregation to fuse features of different scales, while motion enhanced mechanism (MEM) captures motion context to compensate for information blurring caused by moving objects. Experimental results on popular collaborative 3D object detection datasets demonstrate that MRCNet outperforms competing methods in noisy scenarios with improved perception performance using less bandwidth.
 
 ## Installation
-Please refer to [OpenCOOD](https://opencood.readthedocs.io/en/latest/md_files/installation.html) and [centerformer](https://github.com/TuSimple/centerformer/blob/master/docs/INSTALL.md) for more installation details.
+Please refer to [OpenCOOD](https://opencood.readthedocs.io/en/latest/md_files/installation.html) and [Coalign](https://github.com/yifanlu0227/CoAlign?tab=readme-ov-file) for more installation details.
 
-Here we install the environment based on the OpenCOOD and centerformer repos.
+Here we install the environment based on the OpenCOOD and Coalign repos.
 
 ```bash
 # Clone the OpenCOOD repo
@@ -33,10 +33,6 @@ conda install -y pytorch torchvision cudatoolkit=11.3 -c pytorch
 # install spconv 
 pip install spconv-cu113
 
-# install basic library of deformable attention
-git clone https://github.com/TuSimple/centerformer.git
-cd centerformer
-
 # install requirements
 pip install -r requirements.txt
 sh setup.sh
@@ -44,9 +40,9 @@ sh setup.sh
 # clone our repo
 https://github.com/IndigoChildren/collaborative-perception-MRCNet.git
 
-# install v2xvit into the conda environment
+# install MRCNet into the conda environment
 python setup.py develop
-python v2xvit/utils/setup.py build_ext --inplace
+python opencood/utils/setup.py build_ext --inplace
 ```
 
 ## Data
@@ -88,4 +84,4 @@ The explanation of the optional arguments are as follows:
 - `fusion_method` :  indicate the fusion strategy, currently support 'early', 'late', and 'intermediate'.
 
 ## Acknowledgement
-Many thanks to Runsheng Xu for the high-quality dataset and codebase, including [V2XSet](https://drive.google.com/drive/folders/1r5sPiBEvo8Xby-nMaWUTnJIPK6WhY1B6), [OPV2V](https://drive.google.com/drive/folders/1dkDeHlwOVbmgXcDazZvO6TFEZ6V_7WUu), [OpenCOOD](https://github.com/DerrickXuNu/OpenCOOD) and [OpenCDA](https://github.com/ucla-mobility/OpenCDA). The same goes for [Where2comm](https://github.com/MediaBrain-SJTU/Where2comm.git) and [centerformer](https://github.com/TuSimple/centerformer.git) for the excellent codebase.
+Many thanks to Runsheng Xu and Yifan Lu for the high-quality datasets and codebases, including [V2XSim](https://drive.google.com/drive/folders/16_KkyjV9gVFxvj2YDCzQm1s9bVTwI0Fw), [OPV2V](https://drive.google.com/drive/folders/1dkDeHlwOVbmgXcDazZvO6TFEZ6V_7WUu), [V2XSet](https://drive.google.com/drive/folders/1r5sPiBEvo8Xby-nMaWUTnJIPK6WhY1B6), [OpenCOOD](https://github.com/DerrickXuNu/OpenCOOD) and [OpenCDA](https://github.com/ucla-mobility/OpenCDA). The same goes for [Coalign](https://github.com/yifanlu0227/CoAlign?tab=readme-ov-file) for the excellent codebase.
