@@ -74,6 +74,8 @@ The explanation of the optional arguments are as follows:
 given, the trainer will discard the `hypes_yaml` and load the `config.yaml` in the checkpoint folder.
 
 ### Test model
+We provide our pretrained models on V2XSim, OPV2V and V2XSet datasets. The download Google Drive URL is https://drive.google.com/drive/folders/1L_TbhecwIhQUX-dQlhKosLWnIaBdGJOt?usp=share_link.
+
 Before you run the following command, first make sure the validation_dir in config.yaml under your checkpoint folder refers to the testing dataset path, e.g. opv2v_data_dumping/test.
 ```sh
 python opencood/tools/inference_w_noise.py [--model_dir]  ${CHECKPOINT_FOLDER}]
